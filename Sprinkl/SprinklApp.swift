@@ -13,5 +13,6 @@ struct SprinklApp: App {
         WindowGroup {
             ContentView()
         }
+        .windowStyle(.hiddenTitleBar)
     }
 }

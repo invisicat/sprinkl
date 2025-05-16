@@ -1,3 +1,11 @@
+//
+//  Clamping.swift
+//  Sprinkl
+//
+//  Created by Andy Lyek on 5/16/25.
+//
+
+
 @propertyWrapper
 struct Clamping<Value: Comparable> {
   var value: Value
