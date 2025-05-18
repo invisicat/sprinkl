@@ -9,10 +9,14 @@ import SwiftUI
 
 @main
 struct SprinklApp: App {
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
         .windowStyle(.hiddenTitleBar)
+        Window("Overlay", id: "overlay") {
+            OverlayView()
+        }.windowStyle(.hiddenTitleBar)
     }
 }

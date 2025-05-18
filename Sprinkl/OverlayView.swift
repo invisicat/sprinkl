@@ -8,6 +8,42 @@
 import SwiftUI
 import AppKit // Required for NSApplication, NSWindow
 
+enum CountVariant: String, CaseIterable {
+    case Clock
+    case Timer
+    
+    func iconName() -> String {
+        if(self == .Clock) {
+            return "clock"
+        } else {
+            return "light.beacon.max"
+        }
+    }
+}
+
+@ViewBuilder
+func CountView(variant: CountVariant) -> some View {
+    Group {
+        switch(variant) {
+        case .Clock:
+            OverlayClockView()
+                .transition(.asymmetric(
+                    insertion: .move(edge: .leading).combined(with: .opacity),
+                    removal: .move(edge: .trailing).combined(with: .opacity)
+                ))
+            
+        case .Timer:
+            OverlayTimerView()
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity), // Different insertion edge
+                    removal: .move(edge: .leading).combined(with: .opacity)   // Different removal edge
+                ))
+        }
+    }
+    .animation(.easeInOut(duration: 0.35), value: variant)
+
+}
+
 struct OverlayView: View {
     // Store a weak reference to the window that hosts this view.
     // This will be passed in during initialization.
@@ -15,19 +51,18 @@ struct OverlayView: View {
     
     // State for content animation (e.g., fade in)
     @State private var contentOpacity: Double = 0
-    @State private var bgOpacity: Double = 0.75;
+    @EnvironmentObject var settings: OverlaySettings
+    
     @FocusState private var isFocus: Bool
 
     var body: some View {
         ZStack {
             // This ZStack is the content of the transparent window.
             // This color provides the actual semi-transparent background effect.
-            Color.black.opacity(bgOpacity) // Adjust opacity as desired (e.g., 75% black)
-                .ignoresSafeArea() // Ensure it covers the entire screen area
+            Color.black
+                .opacity(settings.opacity)
+                .ignoresSafeArea()
                 .onTapGesture {
-                    // Optional: Close the overlay when its background is clicked.
-                    print("Overlay background tapped, closing window.")
-                    // Use the passed-in window reference to close
                     self.window?.close()
                 }
 
@@ -36,106 +71,71 @@ struct OverlayView: View {
                     .font(.system(size: 72, weight: .bold, design: .rounded)) // Larger, clear font
                     .foregroundColor(.white.opacity(0.9)) // White text, slightly transparent for softer look
                     .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 2) // Subtle shadow for readability
-                Text("00:00:00")
-                    .font(.system(size: 64, weight: .medium, design: .rounded))
-                HStack {
-                    Button("Pause") {
-                        print("Pause Timer")
-                    }
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.black)
-                    .padding(8)
-                    .background(Color.white)
-                    .buttonStyle(.plain)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .padding()
-                    
-                    Button("Short Break") {
-                        print("Pause Timer")
-                    }
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.black)
-                    .padding(8)
-                    .background(Color.white)
-                    .buttonStyle(.plain)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .padding()
-            
-                    Button("Long Break") {
-                        print("Pause Timer")
-                    }
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.black)
-                    .padding(8)
-                    .background(Color.white)
-                    .buttonStyle(.plain)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .padding()
-                }
-                VStack {
-                    HStack {
-                        Slider(
-                            value: $bgOpacity,
-                            in: 0.25...1,
-                        )
-                        Text("\(bgOpacity, format: .percent.precision(.fractionLength(0)))")
-                    }.frame(width: 200)
-                    HStack {
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.3)) { // You can customize the animation
-                                bgOpacity = (bgOpacity - 0.25).clamped(range: 0.25...1)
-                            }
-                        }, label: {
-                           Image(systemName: "moonphase.last.quarter.inverse")
-                               .resizable()
-                               .scaledToFit()
-                               .frame(width: 18, height: 25)
-                               .padding(2)
-                       })
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.roundedRectangle(radius: .infinity))
-                        .tint(.white)
-                        .foregroundStyle(.white)
-                        Spacer()
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.3)) { // You can customize the animation
-                                bgOpacity = 1
-                            }
-                        }, label: {
-                           Image(systemName: "moonphase.last.quarter.inverse")
-                               .resizable()
-                               .scaledToFit()
-                               .frame(width: 18, height: 25)
-                               .padding(2)
-                       })
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.roundedRectangle(radius: .infinity))
-                        .tint(.white)
-                        .foregroundStyle(.white)
-                    }.frame(width: 200)
-                }
+                CountView(variant: settings.countVariant)
             }
             .opacity(contentOpacity)
+            VStack {
+                Spacer()
+                HStack {
+                    HStack {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) { // You can customize the animation
+                                print("ok")
+                            }
+                        }, label: {
+                            ZStack {
+                                Image(systemName: "music.note")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 36, height: 36)
+                                    .padding(2)
+                            }
+                        })
+                        .buttonStyle(DarkButtonStyle())
+                        .padding()
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) { // You can customize the animation
+                                print("ok")
+                            }
+                        }, label: {
+                            ZStack {
+                                Image(systemName: "gear")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 36, height: 36)
+                                    .padding(2)
+                            }
+                        })
+                        .buttonStyle(DarkButtonStyle())
+                        .padding(.vertical)
+                    }
+                    Spacer()
+                    VStack {
+                        OverlaySwitchView()
+                            .frame(width: 120, height: 30)
+                            .padding(.bottom, 20)
+                        OverlayOpacityView()
+                            .opacity(contentOpacity)
+                    }
+                    .padding(20) // Padding from the window edges
+                }
+            }
 
             Button("") {
-                print("Closing Overlay from overlay View.")
+                print("Closing by esc.")
                 self.window?.close()
             }
             .focusable()
             .focused($isFocus)
             .keyboardShortcut(.escape, modifiers: [])
-            .frame(width: 0, height: 0) // Make it take no space
-            .opacity(0) // Make it invisible
-            .allowsHitTesting(false) // Ensure it doesn't interfere with other gestures
+            .frame(width: 0, height: 0)
+            .opacity(0)
+            .allowsHitTesting(false)
         }
-        // The window itself is made transparent by ContentView.
-        // This view's ZStack provides the actual visible semi-transparent background.
         .onAppear {
-            // Animate the content opacity when the view appears
-            withAnimation(.easeIn(duration: 0.8).delay(0.2)) { // Slight delay for a smoother effect
+            withAnimation(.easeIn(duration: 0.8).delay(0.2)) {
                 contentOpacity = 1
                 isFocus = true
-
             }
         }
     }
@@ -147,7 +147,8 @@ struct OverlayView: View {
     // but the close functionality won't work in the preview without a real window.
     ZStack {
         Color.purple.ignoresSafeArea() // Simulate a desktop or other content behind
-        // Pass nil for the window in the preview context as it's not being hosted by a real window here.
         OverlayView(window: nil)
+            .environmentObject(OverlaySettings())
     }
 }
+
